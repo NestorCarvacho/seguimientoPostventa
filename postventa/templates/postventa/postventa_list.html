@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h1 class="h3">Solicitudes de Postventa</h1>
+    </div>
+    <div class="card-body">
+        <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#createPostventaModal">
+            <i class="bi bi-plus-circle"></i> Crear Postventa
+        </button>
+
+        <div class="modal fade" id="createPostventaModal" tabindex="-1" aria-labelledby="createPostventaModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createPostventaModalLabel">Crear Nueva Postventa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" action="{% url 'postventa:create' %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            {{ form.as_p }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Usuario</th>
+                    <th>Tipo de Postventa</th>
+                    <th>Estado</th>
+                    <th>Fecha de Envío</th>
+                    <th>Número de Seguimiento</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for postventa in postventas %}
+                <tr>
+                    <td>{{ postventa.usuario }}</td>
+                    <td>{{ postventa.tipo_postventa.all|join:", " }}</td>
+                    <td>{{ postventa.estado }}</td>
+                    <td>{{ postventa.fecha_envio_correo }}</td>
+                    <td>{{ postventa.numero_seguimiento }}</td>
+                    <td>
+                        <a href="{% url 'postventa:update' postventa.id %}" class="btn btn-sm btn-primary">Editar</a>
+                        <a href="{% url 'postventa:delete' postventa.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $('.table').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/Spanish.json"
+            }
+        });
+    });
+</script>
+{% endblock %}
