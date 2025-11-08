@@ -20,6 +20,11 @@ class PostVentaListView(ListView):
         context['form'] = PostVentaForm()
         return context
 
+    def get_queryset(self):
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return PostVenta.objects.all()
+        return PostVenta.objects.filter(usuario=self.request.user)
+
 @method_decorator(login_required, name='dispatch')
 class PostVentaCreateView(SuccessMessageMixin, CreateView):
     model = PostVenta
@@ -30,7 +35,9 @@ class PostVentaCreateView(SuccessMessageMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.usuario = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        self.object.tipo_postventa.set(form.cleaned_data['tipo_postventa'])
+        return response
 
 @method_decorator(login_required, name='dispatch')
 class PostVentaUpdateView(SuccessMessageMixin, UpdateView):

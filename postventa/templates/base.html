@@ -58,6 +58,19 @@
         textarea.neumorphic-input {
             resize: none;
         }
+
+        @media (max-width: 768px) {
+            .dataTables_wrapper .dataTables_scroll {
+                overflow-x: auto;
+            }
+
+            .table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
     </style>
 </head>
 <body>
