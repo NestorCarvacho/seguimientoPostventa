@@ -52,3 +52,11 @@ class TipoPostVenta(models.Model):
 
     def __str__(self):
         return self.nombre
+
+class Comite(models.Model):
+    nombre = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+User.add_to_class('comite', models.ForeignKey(Comite, on_delete=models.SET_NULL, null=True, blank=True, default=1))

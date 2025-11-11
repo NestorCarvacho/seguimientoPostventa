@@ -4,9 +4,14 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.urls import reverse_lazy
 from django.contrib.messages.views import SuccessMessageMixin
-from .models import PostVenta
+from .models import PostVenta, Comite
 from .forms import PostVentaForm, UserUpdateForm
 from django.contrib.auth.models import User
+from django.contrib.auth.mixins import UserPassesTestMixin
+
+class AdminRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
 
 @method_decorator(login_required, name='dispatch')
 class PostVentaListView(ListView):
@@ -55,20 +60,45 @@ class PostVentaDeleteView(SuccessMessageMixin, DeleteView):
     success_message = 'Solicitud de postventa eliminada exitosamente.'
 
 @method_decorator(login_required, name='dispatch')
-class UserListView(ListView):
+class UserListView(AdminRequiredMixin, ListView):
     model = User
     template_name = 'postventa/user_list.html'
     context_object_name = 'users'
-    paginate_by = 10
 
 @method_decorator(login_required, name='dispatch')
-class UserUpdateView(UpdateView):
+class UserUpdateView(AdminRequiredMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
     template_name = 'postventa/user_form.html'
 
     def get_success_url(self):
-        return reverse_lazy('postventa:list')
+        return reverse_lazy('postventa:user_list')
 
     def get_object(self, queryset=None):
-        return self.request.user
+        return User.objects.get(pk=self.kwargs['pk'])
+
+@method_decorator(login_required, name='dispatch')
+class ComiteListView(AdminRequiredMixin, ListView):
+    model = Comite
+    template_name = 'postventa/comite_list.html'
+    context_object_name = 'comites'
+
+@method_decorator(login_required, name='dispatch')
+class ComiteCreateView(AdminRequiredMixin, CreateView):
+    model = Comite
+    fields = ['nombre']
+    template_name = 'postventa/comite_form.html'
+    success_url = reverse_lazy('postventa:comite_list')
+
+@method_decorator(login_required, name='dispatch')
+class ComiteUpdateView(AdminRequiredMixin, UpdateView):
+    model = Comite
+    fields = ['nombre']
+    template_name = 'postventa/comite_form.html'
+    success_url = reverse_lazy('postventa:comite_list')
+
+@method_decorator(login_required, name='dispatch')
+class ComiteDeleteView(AdminRequiredMixin, DeleteView):
+    model = Comite
+    template_name = 'postventa/comite_confirm_delete.html'
+    success_url = reverse_lazy('postventa:comite_list')

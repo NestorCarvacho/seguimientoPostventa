@@ -10,13 +10,13 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <style>
         body {
-            background-color: #f5f5f7;
+            background-color: #e0f7fa; /* Light teal */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #1d1d1f;
+            color: #4a148c; /* Deep purple */
         }
 
         .navbar {
-            background-color: #ffffff;
+            background-color: #4db6ac; /* Teal */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
         }
@@ -24,35 +24,51 @@
         .card {
             background: #ffffff;
             border-radius: 16px;
-            box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+            box-shadow: 8px 8px 16px #b2dfdb, -8px -8px 16px #ffffff; /* Adjusted for teal */
         }
 
         .btn {
+            background-color: #4db6ac; /* Teal */
+            color: #ffffff;
             border-radius: 12px;
-            box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+            box-shadow: 4px 4px 8px #b2dfdb, -4px -4px 8px #ffffff; /* Adjusted for teal */
+        }
+
+        .btn:hover {
+            background-color: #00897b; /* Darker teal */
         }
 
         .table {
             background: #ffffff;
             border-radius: 12px;
-            box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+            box-shadow: 4px 4px 8px #b2dfdb, -4px -4px 8px #ffffff; /* Adjusted for teal */
         }
 
         .dropdown-menu {
+            background-color: #4db6ac; /* Teal */
+            color: #ffffff;
             border-radius: 12px;
-            box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+            box-shadow: 4px 4px 8px #b2dfdb, -4px -4px 8px #ffffff; /* Adjusted for teal */
+        }
+
+        .dropdown-menu .dropdown-item {
+            color: #ffffff;
+        }
+
+        .dropdown-menu .dropdown-item:hover {
+            background-color: #00897b; /* Darker teal */
         }
 
         .neumorphic-input {
             background: #ffffff;
             border-radius: 12px;
-            box-shadow: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+            box-shadow: inset 4px 4px 8px #b2dfdb, inset -4px -4px 8px #ffffff; /* Adjusted for teal */
             border: none;
             padding: 10px;
         }
 
         .neumorphic-checkbox {
-            accent-color: #1d1d1f;
+            accent-color: #4db6ac; /* Teal */
         }
 
         textarea.neumorphic-input {
@@ -74,23 +90,34 @@
     </style>
 </head>
 <body>
+    {% csrf_token %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Gestión Postventa</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
+                    {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/">Inicio</a>
+                        <a class="nav-link active" aria-current="page" href="/">Post-Ventas</a>
                     </li>
+                    {% if request.user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'postventa:user_list' %}">Usuarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'postventa:comite_list' %}">Comités</a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ request.user.get_full_name|default:request.user.username }}
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{% url 'postventa:user_update' %}">Editar Perfil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'postventa:user_update' request.user.id %}">Editar Perfil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post" action="/accounts/logout/" style="display: inline;">
@@ -100,6 +127,11 @@
                             </li>
                         </ul>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -109,5 +141,18 @@
         {% endblock %}
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Init DataTables only if not already initialized (prevents "Cannot reinitialise DataTable")
+            if (!$.fn.dataTable.isDataTable('.table')) {
+                $('.table').DataTable({
+                    "language": {
+                        "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                    },
+                    responsive: true,
+                });
+            }
+        });
+    </script>
 </body>
 </html>

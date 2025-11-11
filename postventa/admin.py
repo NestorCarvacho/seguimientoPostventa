@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PostVenta, TipoPostVenta
+from .models import PostVenta, TipoPostVenta, Comite
 
 # Register your models here.
 admin.site.register(TipoPostVenta)
@@ -13,3 +13,8 @@ class PostVentaAdmin(admin.ModelAdmin):
     def tipo_postventa_display(self, obj):
         return ", ".join([tipo.nombre for tipo in obj.tipo_postventa.all()])
     tipo_postventa_display.short_description = 'Tipo de Postventa'
+
+@admin.register(Comite)
+class ComiteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre')
+    search_fields = ('nombre',)

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Lista de Comités</h1>
+<a href="{% url 'postventa:comite_create' %}" class="btn btn-teal">Crear Comité</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for comite in comites %}
+        <tr>
+            <td>{{ comite.id }}</td>
+            <td>{{ comite.nombre }}</td>
+            <td>
+                <a href="{% url 'postventa:comite_update' comite.id %}" class="btn btn-sm btn-teal">Editar</a>
+                <a href="{% url 'postventa:comite_delete' comite.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
