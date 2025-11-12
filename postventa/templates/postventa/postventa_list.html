@@ -104,14 +104,14 @@
                                                                 <h6 class="text-muted">Información del Remitente</h6>
                                                                 <p><strong>Usuario:</strong> {{ postventa.usuario.get_full_name|default:postventa.usuario.username }}</p>
                                                                 <p><strong>Nombre:</strong> {{ postventa.nombre_remitente }}</p>
-                                                                <p><strong>Email:</strong> {{ postventa.email_remitente }}</p>
-                                                                <p><strong>Teléfono:</strong> {{ postventa.telefono_remitente }}</p>
-                                                                
-                                                                <h6 class="text-muted mt-3">Información del Destinatario</h6>
-                                                                <p><strong>Nombre:</strong> {{ postventa.nombre_destinatario }}</p>
-                                                                <p><strong>Dirección:</strong> {{ postventa.direccion_destinatario }}</p>
-                                                                <p><strong>Email:</strong> {{ postventa.email_destinatario }}</p>
-                                                                <p><strong>Teléfono:</strong> {{ postventa.telefono_destinatario }}</p>
+                                                                <p><strong>Email:</strong> 
+                                                                    {% if postventa.usuario.email and postventa.usuario.email|length > 0 %}
+                                                                        <a href="mailto:{{ postventa.usuario.email }}">{{ postventa.usuario.email }}</a>
+                                                                    {% else %}
+                                                                        <span class="text-muted">Sin email registrado</span>
+                                                                    {% endif %}
+                                                                </p>
+                                                                <p><strong>Teléfono:</strong> {{ postventa.numero_contacto }}</p>
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <h6 class="text-muted">Información del Envío</h6>
