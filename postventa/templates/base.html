@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gestión Postventa{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             background-color: #e0f7fa; /* Light teal */
@@ -45,18 +47,113 @@
         }
 
         .dropdown-menu {
-            background-color: #4db6ac; /* Teal */
-            color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 4px 4px 8px #b2dfdb, -4px -4px 8px #ffffff; /* Adjusted for teal */
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            min-width: 200px;
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            display: block !important;
         }
 
         .dropdown-menu .dropdown-item {
+            color: #495057;
+            padding: 0.5rem 1rem;
+            transition: all 0.15s ease-in-out;
+            display: block;
+            width: 100%;
+            text-decoration: none;
+        }
+
+        .dropdown-menu .dropdown-item:hover,
+        .dropdown-menu .dropdown-item:focus {
+            background-color: #4db6ac;
             color: #ffffff;
         }
 
-        .dropdown-menu .dropdown-item:hover {
-            background-color: #00897b; /* Darker teal */
+        .dropdown-menu .dropdown-item button {
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            padding: 0;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        /* Force dropdown positioning */
+        .navbar .dropdown-menu {
+            right: 0 !important;
+            left: auto !important;
+        }
+
+        /* DataTables styling fixes */
+        .dataTables_wrapper {
+            margin-top: 20px;
+        }
+
+        .dataTables_length,
+        .dataTables_filter {
+            margin-bottom: 15px;
+        }
+
+        .dataTables_length select,
+        .dataTables_filter input {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 5px;
+        }
+
+        .dataTables_info {
+            padding-top: 10px;
+        }
+
+        .dataTables_paginate {
+            padding-top: 10px;
+        }
+
+        .dataTables_paginate .paginate_button {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            color: #495057 !important;
+            text-decoration: none;
+        }
+
+        .dataTables_paginate .paginate_button:hover {
+            background: #4db6ac;
+            color: #ffffff !important;
+            border-color: #4db6ac;
+        }
+
+        .dataTables_paginate .paginate_button.current {
+            background: #4db6ac;
+            color: #ffffff !important;
+            border-color: #4db6ac;
+        }
+
+        /* Responsive table */
+        .table-responsive {
+            overflow-x: auto;
         }
 
         .neumorphic-input {
@@ -102,27 +199,57 @@
                 <ul class="navbar-nav">
                     {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/">Post-Ventas</a>
+                        <a class="nav-link active" aria-current="page" href="/">
+                            <i class="fas fa-clipboard-list"></i> Post-Ventas
+                        </a>
                     </li>
-                    {% if request.user.is_staff %}
+                    {% if request.user.is_staff or request.user.is_superuser %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'postventa:user_list' %}">Usuarios</a>
+                        <a class="nav-link" href="{% url 'postventa:user_list' %}">
+                            <i class="fas fa-users"></i> Usuarios
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'postventa:comite_list' %}">Comités</a>
+                        <a class="nav-link" href="{% url 'postventa:comite_list' %}">
+                            <i class="fas fa-building"></i> Comités
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'postventa:tipo_usuario_list' %}">
+                            <i class="fas fa-user-tag"></i> Tipos de Usuario
+                        </a>
+                    </li>
+                    {% elif request.user.tipo_usuario.puede_gestionar_usuarios %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'postventa:user_list' %}">
+                            <i class="fas fa-users"></i> Usuarios
+                        </a>
+                    </li>
+                    {% elif request.user.tipo_usuario.puede_gestionar_comites %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'postventa:comite_list' %}">
+                            <i class="fas fa-building"></i> Comités
+                        </a>
                     </li>
                     {% endif %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" onclick="toggleDropdown(event)" role="button" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
                             {{ request.user.get_full_name|default:request.user.username }}
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{% url 'postventa:user_update' request.user.id %}">Editar Perfil</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'postventa:user_update' request.user.id %}">
+                                    <i class="fas fa-edit me-2"></i>Editar Perfil
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="post" action="/accounts/logout/" style="display: inline;">
+                                <form method="post" action="/accounts/logout/" class="d-inline w-100">
                                     {% csrf_token %}
-                                    <button type="submit" class="dropdown-item">Cerrar Sesión</button>
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </button>
                                 </form>
                             </li>
                         </ul>
@@ -140,18 +267,262 @@
         {% block content %}
         {% endblock %}
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Scripts in correct order -->
+    <!-- Try multiple jQuery sources for reliability -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // Init DataTables only if not already initialized (prevents "Cannot reinitialise DataTable")
-            if (!$.fn.dataTable.isDataTable('.table')) {
-                $('.table').DataTable({
-                    "language": {
-                        "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
-                    },
-                    responsive: true,
+        // Fallback if Google CDN fails
+        if (typeof jQuery === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        // Final fallback if both CDNs fail
+        if (typeof jQuery === 'undefined') {
+            console.error('CRÍTICO: jQuery no se pudo cargar desde ningún CDN');
+            alert('Error: No se pudo cargar jQuery. Verifica tu conexión a internet.');
+        } else {
+            // jQuery cargado correctamente, proceder con el resto
+            loadDataTablesLibraries();
+        }
+        
+        function loadDataTablesLibraries() {
+            // Load DataTables
+            var script1 = document.createElement('script');
+            script1.src = 'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js';
+            script1.onload = function() {
+                
+                // Load DataTables Bootstrap integration
+                var script2 = document.createElement('script');
+                script2.src = 'https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js';
+                script2.onload = function() {
+                    
+                    // Load Bootstrap
+                    var script3 = document.createElement('script');
+                    script3.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js';
+                    script3.onload = function() {
+                        console.log('Sistema: Todas las librerías cargadas correctamente');
+                        
+                        // AHORA sí, disparar el evento personalizado para inicializar DataTables
+                        window.dispatchEvent(new Event('allLibrariesLoaded'));
+                    };
+                    script3.onerror = function() {
+                        console.error('Error cargando Bootstrap');
+                    };
+                    document.head.appendChild(script3);
+                };
+                script2.onerror = function() {
+                    console.error('Error cargando DataTables Bootstrap');
+                };
+                document.head.appendChild(script2);
+            };
+            script1.onerror = function() {
+                console.error('Error cargando DataTables core');
+            };
+            document.head.appendChild(script1);
+        }
+    </script>
+    
+    <script>
+        // Simple dropdown toggle function
+        function toggleDropdown(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const dropdownMenu = document.getElementById('userDropdownMenu');
+            const isVisible = dropdownMenu.classList.contains('show');
+            
+            // Hide all open dropdowns first
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            // Toggle current dropdown
+            if (!isVisible) {
+                dropdownMenu.classList.add('show');
+            }
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.dropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
                 });
             }
+        });
+        
+        // Close dropdown when pressing Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+    </script>
+
+    <script>
+        // FUNCIÓN UNIVERSAL DE INICIALIZACIÓN DE DATATABLES
+        function initUniversalDataTables() {
+            // Verificación crítica de dependencias
+            if (typeof $ === 'undefined' || typeof jQuery === 'undefined') {
+                console.warn('DataTable Universal: jQuery no disponible, reintentando...');
+                setTimeout(initUniversalDataTables, 500);
+                return false;
+            }
+            
+            if (typeof $.fn === 'undefined' || typeof $.fn.DataTable === 'undefined') {
+                console.warn('DataTable Universal: Plugin DataTables no disponible, reintentando...');
+                setTimeout(initUniversalDataTables, 500);
+                return false;
+            }
+            
+            // Lista de tablas que deben convertirse en DataTables
+            const tables = [
+                'postventasTable',
+                'usersTable', 
+                'tiposUsuarioTable',
+                'comitesTable'
+            ];
+            
+            tables.forEach(tableId => {
+                const tabla = $(`#${tableId}`);
+                if (tabla.length > 0) {
+                    try {
+                        // Destruir instancia previa si existe
+                        if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
+                            tabla.DataTable().destroy();
+                        }
+                        
+                        // Configuración universal
+                        tabla.DataTable({
+                            "paging": true,
+                            "pageLength": 10,
+                            "lengthMenu": [5, 10, 15, 20, 50, 100],
+                            "searching": true,
+                            "ordering": true,
+                            "info": true,
+                            "autoWidth": false,
+                            "responsive": true,
+                            
+                            // Idioma en español
+                            "language": {
+                                "decimal": ",",
+                                "thousands": ".",
+                                "lengthMenu": "Mostrar _MENU_ registros por página",
+                                "zeroRecords": "No se encontraron registros que coincidan",
+                                "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                                "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                                "infoFiltered": "(filtrado de _MAX_ registros totales)",
+                                "search": "Buscar:",
+                                "loadingRecords": "Cargando...",
+                                "processing": "Procesando...",
+                                "paginate": {
+                                    "first": "Primero",
+                                    "last": "Último",
+                                    "next": "Siguiente",
+                                    "previous": "Anterior"
+                                },
+                                "emptyTable": "No hay datos disponibles en la tabla"
+                            },
+                            
+                            // Configuración específica por tabla
+                            "columnDefs": getColumnDefsForTable(tableId),
+                            "order": getDefaultOrderForTable(tableId),
+                            
+                            "initComplete": function(settings, json) {
+                                console.log(`DataTable: ${tableId} inicializado correctamente`);
+                            }
+                        });
+                        
+                    } catch (error) {
+                        console.error(`Error al inicializar DataTable ${tableId}:`, error.message);
+                    }
+                }
+            });
+        }
+        
+        // Configuraciones específicas por tabla
+        function getColumnDefsForTable(tableId) {
+            switch(tableId) {
+                case 'postventasTable':
+                    return [
+                        { "orderable": false, "targets": 7 }, // Acciones
+                        { "searchable": false, "targets": 7 }
+                    ];
+                case 'usersTable':
+                    return [
+                        { "orderable": false, "targets": 7 }, // Acciones
+                        { "searchable": false, "targets": 7 }
+                    ];
+                case 'tiposUsuarioTable':
+                    return [
+                        { "orderable": false, "targets": 6 }, // Acciones
+                        { "searchable": false, "targets": 6 }
+                    ];
+                case 'comitesTable':
+                    return [
+                        { "orderable": false, "targets": 2 }, // Acciones
+                        { "searchable": false, "targets": 2 }
+                    ];
+                default:
+                    return [];
+            }
+        }
+        
+        // Orden por defecto para cada tabla
+        function getDefaultOrderForTable(tableId) {
+            switch(tableId) {
+                case 'postventasTable':
+                    return [[5, "desc"]]; // Por fecha
+                case 'usersTable':
+                    return [[0, "asc"]]; // Por usuario
+                case 'tiposUsuarioTable':
+                    return [[0, "asc"]]; // Por nombre
+                case 'comitesTable':
+                    return [[1, "asc"]]; // Por nombre
+                default:
+                    return [[0, "asc"]];
+            }
+        }
+
+        // VARIABLE DE CONTROL PARA EVITAR MÚLTIPLES INICIALIZACIONES
+        let dataTablesInitialized = false;
+        
+        // FUNCIÓN SEGURA DE INICIALIZACIÓN
+        function safeInitDataTables() {
+            if (dataTablesInitialized) {
+                return; // Ya se inicializó
+            }
+            
+            if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
+                dataTablesInitialized = true;
+                initUniversalDataTables();
+            }
+        }
+
+        // ESCUCHAR EL EVENTO CUANDO TODAS LAS LIBRERÍAS ESTÉN CARGADAS
+        window.addEventListener('allLibrariesLoaded', function() {
+            setTimeout(() => {
+                safeInitDataTables();
+            }, 100);
+        });
+
+        // BACKUP: DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                safeInitDataTables();
+            }, 2000);
+        });
+
+        // BACKUP FINAL: window load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                safeInitDataTables();
+            }, 3000);
         });
     </script>
 </body>

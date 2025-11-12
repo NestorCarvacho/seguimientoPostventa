@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DataTables</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Test DataTables</h1>
+        <div class="alert alert-info" id="status">Cargando...</div>
+        
+        <table id="testTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>Juan Pérez</td><td>juan@test.com</td><td>2025-01-01</td></tr>
+                <tr><td>2</td><td>María García</td><td>maria@test.com</td><td>2025-01-02</td></tr>
+                <tr><td>3</td><td>Carlos López</td><td>carlos@test.com</td><td>2025-01-03</td></tr>
+                <tr><td>4</td><td>Ana Martín</td><td>ana@test.com</td><td>2025-01-04</td></tr>
+                <tr><td>5</td><td>Pedro Sánchez</td><td>pedro@test.com</td><td>2025-01-05</td></tr>
+                <tr><td>6</td><td>Laura Torres</td><td>laura@test.com</td><td>2025-01-06</td></tr>
+                <tr><td>7</td><td>Miguel Ruiz</td><td>miguel@test.com</td><td>2025-01-07</td></tr>
+                <tr><td>8</td><td>Carmen Vega</td><td>carmen@test.com</td><td>2025-01-08</td></tr>
+                <tr><td>9</td><td>Roberto Díaz</td><td>roberto@test.com</td><td>2025-01-09</td></tr>
+                <tr><td>10</td><td>Isabel Castro</td><td>isabel@test.com</td><td>2025-01-10</td></tr>
+                <tr><td>11</td><td>Francisco Ortiz</td><td>francisco@test.com</td><td>2025-01-11</td></tr>
+                <tr><td>12</td><td>Teresa Moreno</td><td>teresa@test.com</td><td>2025-01-12</td></tr>
+                <tr><td>13</td><td>Antonio Jiménez</td><td>antonio@test.com</td><td>2025-01-13</td></tr>
+                <tr><td>14</td><td>Pilar Romero</td><td>pilar@test.com</td><td>2025-01-14</td></tr>
+                <tr><td>15</td><td>José Herrera</td><td>jose@test.com</td><td>2025-01-15</td></tr>
+                <tr><td>16</td><td>Rosa Navarro</td><td>rosa@test.com</td><td>2025-01-16</td></tr>
+                <tr><td>17</td><td>Manuel Vargas</td><td>manuel@test.com</td><td>2025-01-17</td></tr>
+                <tr><td>18</td><td>Dolores Gil</td><td>dolores@test.com</td><td>2025-01-18</td></tr>
+                <tr><td>19</td><td>Enrique Reyes</td><td>enrique@test.com</td><td>2025-01-19</td></tr>
+                <tr><td>20</td><td>Alejandra Cruz</td><td>alejandra@test.com</td><td>2025-01-20</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `alert alert-${type}`;
+            statusEl.innerHTML = message;
+            console.log(message);
+        }
+
+        $(document).ready(function() {
+            updateStatus('Iniciando prueba de DataTables...', 'warning');
+            
+            // Verificar librerías
+            const jQueryOK = typeof $ !== 'undefined';
+            const dtOK = typeof $.fn.DataTable !== 'undefined';
+            const bsOK = typeof bootstrap !== 'undefined';
+            
+            console.log('=== DIAGNÓSTICO COMPLETO ===');
+            console.log('jQuery:', jQueryOK ? 'OK (' + $.fn.jquery + ')' : 'FALLA');
+            console.log('DataTables:', dtOK ? 'OK' : 'FALLA');
+            console.log('Bootstrap:', bsOK ? 'OK' : 'FALLA');
+            console.log('Tabla existe:', document.getElementById('testTable') ? 'OK' : 'FALLA');
+            
+            if (!jQueryOK) {
+                updateStatus('❌ ERROR: jQuery no está disponible', 'danger');
+                return;
+            }
+            
+            if (!dtOK) {
+                updateStatus('❌ ERROR: DataTables no está disponible', 'danger');
+                return;
+            }
+            
+            updateStatus('✅ Librerías cargadas. Inicializando DataTable...', 'success');
+            
+            try {
+                const table = $('#testTable').DataTable({
+                    pageLength: 5,
+                    lengthMenu: [5, 10, 15, 20],
+                    language: {
+                        lengthMenu: "Mostrar _MENU_ registros",
+                        zeroRecords: "No se encontraron registros",
+                        info: "Página _PAGE_ de _PAGES_",
+                        infoEmpty: "No hay registros",
+                        search: "Buscar:",
+                        paginate: {
+                            first: "Primero",
+                            last: "Último", 
+                            next: "Siguiente",
+                            previous: "Anterior"
+                        }
+                    },
+                    drawCallback: function() {
+                        updateStatus('✅ DataTable funcionando correctamente!', 'success');
+                    }
+                });
+                
+                console.log('DataTable creado:', table);
+                
+                // Test después de 1 segundo
+                setTimeout(function() {
+                    const pageInfo = table.page.info();
+                    console.log('Test final:', {
+                        'Páginas': pageInfo.pages,
+                        'Registros': pageInfo.recordsTotal,
+                        'Controles visibles': {
+                            'Paginación': $('.dataTables_paginate').length > 0,
+                            'Búsqueda': $('.dataTables_filter').length > 0,
+                            'Cantidad': $('.dataTables_length').length > 0,
+                            'Info': $('.dataTables_info').length > 0
+                        }
+                    });
+                }, 1000);
+                
+            } catch (error) {
+                updateStatus('❌ ERROR: ' + error.message, 'danger');
+                console.error('Error completo:', error);
+            }
+        });
+    </script>
+</body>
+</html>

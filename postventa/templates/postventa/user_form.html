@@ -1,10 +1,190 @@
 {% extends 'base.html' %}
 
+{% block title %}
+    {% if form.instance.pk %}Editar Usuario{% else %}Crear Usuario{% endif %}
+{% endblock %}
+
 {% block content %}
-<h1>Editar Perfil</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-teal">Guardar Cambios</button>
-</form>
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if form.instance.pk %}
+                            Editar Usuario: {{ form.instance.username }}
+                        {% else %}
+                            Crear Nuevo Usuario
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'postventa:user_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Información básica -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Información Básica</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                                        {{ form.username.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger small">{{ form.username.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Nombre único para iniciar sesión
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                        {{ form.first_name.label }}
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger small">{{ form.first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                        {{ form.last_name.label }}
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger small">{{ form.last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                                        {{ form.email.label }}
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Contraseña y permisos -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Configuración y Permisos</h6>
+                                
+                                {% if not form.instance.pk %}
+                                <!-- Solo mostrar campos de contraseña en creación -->
+                                <div class="mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                        {{ form.password1.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger small">{{ form.password1.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                        {{ form.password2.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.password2 }}
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger small">{{ form.password2.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <label for="{{ form.comite.id_for_label }}" class="form-label">
+                                        {{ form.comite.label }}
+                                    </label>
+                                    {{ form.comite }}
+                                    {% if form.comite.errors %}
+                                        <div class="text-danger small">{{ form.comite.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.tipo_usuario.id_for_label }}" class="form-label">
+                                        {{ form.tipo_usuario.label }}
+                                    </label>
+                                    {{ form.tipo_usuario }}
+                                    {% if form.tipo_usuario.errors %}
+                                        <div class="text-danger small">{{ form.tipo_usuario.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Define los permisos específicos del usuario
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                            {{ form.is_active.label }}
+                                        </label>
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                        <div class="text-danger small">{{ form.is_active.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Usuario puede iniciar sesión
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_staff }}
+                                        <label for="{{ form.is_staff.id_for_label }}" class="form-check-label">
+                                            {{ form.is_staff.label }}
+                                        </label>
+                                    </div>
+                                    {% if form.is_staff.errors %}
+                                        <div class="text-danger small">{{ form.is_staff.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Puede administrar usuarios y acceder al admin
+                                    </small>
+                                </div>
+
+                                {% if form.instance.pk %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Contraseña:</strong> 
+                                    <a href="{% url 'postventa:user_change_password' form.instance.pk %}" class="btn btn-sm btn-warning ms-2">
+                                        <i class="fas fa-key"></i> Cambiar Contraseña
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}Actualizar{% else %}Crear{% endif %} Usuario
+                            </button>
+                            <a href="{% url 'postventa:user_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

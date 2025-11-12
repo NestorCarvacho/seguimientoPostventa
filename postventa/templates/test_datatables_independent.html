@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DataTables Independiente</title>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="alert alert-warning">
+            <h4>🧪 TEST INDEPENDIENTE DE DATATABLES</h4>
+            <p>Esta página usa las mismas librerías pero sin el template base para diagnosticar el problema.</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5>Post-ventas (Test)</h5>
+            </div>
+            <div class="card-body">
+                <table id="testTable" class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for postventa in postventas %}
+                        <tr>
+                            <td>{{ postventa.id }}</td>
+                            <td>{{ postventa.usuario.username }}</td>
+                            <td>{{ postventa.nombre_remitente }}</td>
+                            <td>{{ postventa.get_estado_display }}</td>
+                            <td>{{ postventa.fecha_envio_correo|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5">No hay datos</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        console.log('=== TEST INDEPENDIENTE INICIADO ===');
+        
+        $(document).ready(function() {
+            console.log('jQuery:', typeof $ !== 'undefined' ? 'OK v' + $.fn.jquery : 'FALLA');
+            console.log('DataTables:', typeof $.fn.DataTable !== 'undefined' ? 'OK' : 'FALLA'); 
+            console.log('Bootstrap:', typeof bootstrap !== 'undefined' ? 'OK' : 'FALLA');
+            
+            try {
+                const dt = $('#testTable').DataTable({
+                    pageLength: 5,
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/Spanish.json'
+                    }
+                });
+                
+                console.log('✅ SUCCESS: DataTable inicializado');
+                alert('✅ DataTable funcionando en test independiente!');
+                
+                // Verificar controles después de 1 segundo
+                setTimeout(function() {
+                    const controles = {
+                        paginate: $('.dataTables_paginate').length,
+                        search: $('.dataTables_filter').length,
+                        length: $('.dataTables_length').length,
+                        info: $('.dataTables_info').length
+                    };
+                    console.log('Controles detectados:', controles);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ ERROR:', error);
+                alert('❌ ERROR: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

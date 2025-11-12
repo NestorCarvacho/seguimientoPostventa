@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import PostVenta, TipoPostVenta
+from django.contrib.auth.forms import UserCreationForm
+from .models import PostVenta, TipoPostVenta, Comite, TipoUsuario
 
 class PostVentaForm(forms.ModelForm):
     class Meta:
@@ -41,15 +42,112 @@ class PostVentaForm(forms.ModelForm):
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'comite']
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'comite', 'tipo_usuario']
         widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'comite': forms.Select(attrs={'class': 'form-select'})
+            'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'comite': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_usuario': forms.Select(attrs={'class': 'form-select'})
+        }
+        labels = {
+            'username': 'Nombre de usuario',
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'email': 'Correo electrónico',
+            'is_staff': 'Es staff/administrador',
+            'is_active': 'Usuario activo',
+            'comite': 'Comité',
+            'tipo_usuario': 'Tipo de Usuario'
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.instance.is_staff:
-            self.fields['comite'].disabled = True
+        self.fields['comite'].queryset = Comite.objects.all()
+        self.fields['comite'].empty_label = "Seleccione un comité"
+        self.fields['tipo_usuario'].queryset = TipoUsuario.objects.filter(activo=True)
+        self.fields['tipo_usuario'].empty_label = "Seleccione un tipo de usuario"
+
+class UserCreateForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    first_name = forms.CharField(max_length=150, required=True)
+    last_name = forms.CharField(max_length=150, required=True)
+    is_staff = forms.BooleanField(required=False)
+    is_active = forms.BooleanField(initial=True, required=False)
+    comite = forms.ModelChoiceField(queryset=Comite.objects.all(), required=False, empty_label="Seleccione un comité")
+    tipo_usuario = forms.ModelChoiceField(queryset=TipoUsuario.objects.filter(activo=True), required=False, empty_label="Seleccione un tipo de usuario")
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'is_staff', 'is_active', 'comite', 'tipo_usuario')
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'password1': forms.PasswordInput(attrs={'class': 'form-control'}),
+            'password2': forms.PasswordInput(attrs={'class': 'form-control'}),
+            'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'comite': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_usuario': forms.Select(attrs={'class': 'form-select'})
+        }
+        labels = {
+            'username': 'Nombre de usuario',
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'email': 'Correo electrónico',
+            'password1': 'Contraseña',
+            'password2': 'Confirmar contraseña',
+            'is_staff': 'Es staff/administrador',
+            'is_active': 'Usuario activo',
+            'comite': 'Comité',
+            'tipo_usuario': 'Tipo de Usuario'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Aplicar clases CSS a los campos de contraseña
+        self.fields['password1'].widget.attrs.update({'class': 'form-control'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control'})
+        self.fields['comite'].widget.attrs.update({'class': 'form-select'})
+        self.fields['tipo_usuario'].widget.attrs.update({'class': 'form-select'})
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.is_staff = self.cleaned_data['is_staff']
+        user.is_active = self.cleaned_data['is_active']
+        if commit:
+            user.save()
+            if self.cleaned_data['comite']:
+                user.comite = self.cleaned_data['comite']
+            if self.cleaned_data['tipo_usuario']:
+                user.tipo_usuario = self.cleaned_data['tipo_usuario']
+            user.save()
+        return user
+
+class UserPasswordResetForm(forms.Form):
+    new_password1 = forms.CharField(
+        label='Nueva contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        max_length=128
+    )
+    new_password2 = forms.CharField(
+        label='Confirmar nueva contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        max_length=128
+    )
+
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = self.cleaned_data.get('new_password2')
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError("Las contraseñas no coinciden.")
+        return password2

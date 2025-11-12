@@ -179,4 +179,139 @@
         </div>
     </div>
 </div>
+
+<script>
+// Configuración de DataTables simplificada y robusta
+$(document).ready(function() {
+    console.log('=== INICIO DATATABLE DEBUG ===');
+    console.log('jQuery cargado:', typeof $ !== 'undefined' ? 'SÍ (v' + $.fn.jquery + ')' : 'NO');
+    console.log('DataTables cargado:', typeof $.fn.DataTable !== 'undefined' ? 'SÍ' : 'NO');
+    console.log('Bootstrap cargado:', typeof bootstrap !== 'undefined' ? 'SÍ' : 'NO');
+    
+    // Verificar si la tabla existe
+    const tableElement = document.getElementById('postventasTable');
+    console.log('Tabla encontrada:', tableElement !== null ? 'SÍ' : 'NO');
+    
+    if (!tableElement) {
+        console.error('❌ ERROR: No se encontró la tabla #postventasTable');
+        return;
+    }
+    
+    if (typeof $.fn.DataTable === 'undefined') {
+        console.error('❌ ERROR: DataTables no está disponible');
+        alert('DataTables no se ha cargado. Por favor, recarga la página.');
+        return;
+    }
+    
+    try {
+        // Destruir cualquier instancia anterior
+        if ($.fn.DataTable.isDataTable('#postventasTable')) {
+            $('#postventasTable').DataTable().destroy();
+            console.log('Instancia anterior de DataTable destruida');
+        }
+        
+        // Configuración de DataTable
+        const table = $('#postventasTable').DataTable({
+            // Configuración básica
+            "paging": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            
+            // Configuración de paginación
+            "pageLength": 15,
+            "lengthMenu": [
+                [10, 15, 25, 50, 100, -1],
+                [10, 15, 25, 50, 100, "Todos"]
+            ],
+            
+            // Orden inicial (columna 5 = fecha envío, descendente)
+            "order": [[5, "desc"]],
+            
+            // Configuración de columnas
+            "columnDefs": [
+                { "orderable": false, "targets": 7 }, // Columna acciones no ordenable
+                { "searchable": false, "targets": 7 }  // Columna acciones no buscable
+            ],
+            
+            // Configuración responsive
+            "responsive": true,
+            
+            // Configuración de idioma en español
+            "language": {
+                "decimal": "",
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                "infoFiltered": "(filtrado de _MAX_ registros totales)",
+                "infoPostFix": "",
+                "thousands": ",",
+                "lengthMenu": "Mostrar _MENU_ registros",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron registros que coincidan",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                },
+                "aria": {
+                    "sortAscending": ": activar para ordenar la columna ascendente",
+                    "sortDescending": ": activar para ordenar la columna descendente"
+                }
+            },
+            
+            // Callback después del renderizado
+            "drawCallback": function(settings) {
+                const api = this.api();
+                console.log('✅ DataTable renderizado correctamente');
+                console.log('Registros mostrados:', api.page.info().recordsDisplay);
+                console.log('Total de registros:', api.page.info().recordsTotal);
+            },
+            
+            // Callback de inicialización
+            "initComplete": function(settings, json) {
+                console.log('✅ DataTable inicialización completa');
+                console.log('Configuración aplicada:', settings);
+            }
+        });
+        
+        console.log('✅ DataTable creado exitosamente');
+        console.log('Objeto tabla:', table);
+        console.log('=== FIN DATATABLE DEBUG ===');
+        
+        // Test de funcionalidad después de 1 segundo
+        setTimeout(function() {
+            console.log('=== TEST FUNCIONALIDAD ===');
+            console.log('Información de página:', table.page.info());
+            console.log('Número de columnas:', table.columns().count());
+            console.log('Número de filas:', table.rows().count());
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ ERROR CRÍTICO al inicializar DataTable:', error);
+        console.error('Stack trace:', error.stack);
+        alert('Error crítico al inicializar la tabla de datos: ' + error.message);
+    }
+});
+
+// Función para verificar el estado después de la carga
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        console.log('=== VERIFICACIÓN POST-CARGA ===');
+        console.log('DataTable instanciado:', $.fn.DataTable.isDataTable('#postventasTable'));
+        
+        if ($.fn.DataTable.isDataTable('#postventasTable')) {
+            const api = $('#postventasTable').DataTable();
+            console.log('API de DataTable disponible:', typeof api);
+            console.log('Controles de paginación visibles:', $('.dataTables_paginate').is(':visible'));
+            console.log('Campo de búsqueda visible:', $('.dataTables_filter').is(':visible'));
+            console.log('Selector de cantidad visible:', $('.dataTables_length').is(':visible'));
+        }
+    }, 2000);
+});
+</script>
 {% endblock %}

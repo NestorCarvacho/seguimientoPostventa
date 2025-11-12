@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}Editar Tipo de Usuario{% else %}Crear Tipo de Usuario{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if form.instance.pk %}
+                            Editar Tipo de Usuario: {{ form.instance.nombre }}
+                        {% else %}
+                            Crear Nuevo Tipo de Usuario
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'postventa:tipo_usuario_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Información básica -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Información Básica</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                        Nombre <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" name="nombre" value="{{ form.nombre.value|default:'' }}" required>
+                                    {% if form.nombre.errors %}
+                                        <div class="text-danger small">{{ form.nombre.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.nivel_acceso.id_for_label }}" class="form-label">
+                                        Nivel de Acceso
+                                    </label>
+                                    <select class="form-select" name="nivel_acceso">
+                                        <option value="">Seleccione un nivel</option>
+                                        <option value="revisor" {% if form.nivel_acceso.value == 'revisor' %}selected{% endif %}>Revisor - Solo lectura</option>
+                                        <option value="usuario" {% if form.nivel_acceso.value == 'usuario' %}selected{% endif %}>Usuario - Gestiona sus propias post-ventas</option>
+                                        <option value="supervisor" {% if form.nivel_acceso.value == 'supervisor' %}selected{% endif %}>Supervisor - Ve todas, edita las propias</option>
+                                        <option value="administrador" {% if form.nivel_acceso.value == 'administrador' %}selected{% endif %}>Administrador - Control total</option>
+                                    </select>
+                                    {% if form.nivel_acceso.errors %}
+                                        <div class="text-danger small">{{ form.nivel_acceso.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                        Descripción
+                                    </label>
+                                    <textarea class="form-control" name="descripcion" rows="3" placeholder="Descripción del tipo de usuario">{{ form.descripcion.value|default:'' }}</textarea>
+                                    {% if form.descripcion.errors %}
+                                        <div class="text-danger small">{{ form.descripcion.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="activo" {% if form.activo.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Activo
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Los tipos inactivos no se pueden asignar a usuarios
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Permisos -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Permisos de Post-ventas</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_crear_postventa" {% if form.puede_crear_postventa.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede crear post-ventas
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_ver_todas_postventas" {% if form.puede_ver_todas_postventas.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede ver todas las post-ventas
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_editar_todas_postventas" {% if form.puede_editar_todas_postventas.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede editar todas las post-ventas
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_eliminar_todas_postventas" {% if form.puede_eliminar_todas_postventas.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede eliminar todas las post-ventas
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_editar_propias_postventas" {% if form.puede_editar_propias_postventas.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede editar sus propias post-ventas
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_eliminar_propias_postventas" {% if form.puede_eliminar_propias_postventas.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede eliminar sus propias post-ventas
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <h6 class="text-muted mb-3 mt-4">Permisos Administrativos</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_gestionar_usuarios" {% if form.puede_gestionar_usuarios.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede gestionar usuarios
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="puede_gestionar_comites" {% if form.puede_gestionar_comites.value %}checked{% endif %}>
+                                        <label class="form-check-label">
+                                            Puede gestionar comités
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}Actualizar{% else %}Crear{% endif %} Tipo de Usuario
+                            </button>
+                            <a href="{% url 'postventa:tipo_usuario_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
