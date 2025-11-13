@@ -7,7 +7,10 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.http import Http404
 from .models import PostVenta, Comite, TipoUsuario
-from .forms import PostVentaForm, UserUpdateForm, UserCreateForm, UserPasswordResetForm
+from .forms import PostVentaForm, UserUpdateForm, UserCreateForm, UserPasswordResetForm, UserSelfUpdateForm
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import UserPassesTestMixin
 
@@ -90,6 +93,7 @@ class PostVentaListView(ListView):
             'puede_eliminar_todas': self._user_can_delete_all(),
             'puede_editar_propias': self._user_can_edit_own(),
             'puede_eliminar_propias': self._user_can_delete_own(),
+            'puede_exportar': self._user_can_export(),
         }
         return context
 
@@ -146,6 +150,17 @@ class PostVentaListView(ListView):
         if hasattr(user, 'tipo_usuario') and user.tipo_usuario:
             return user.tipo_usuario.puede_eliminar_propias_postventas
         return True  # Por defecto pueden eliminar las propias
+
+    def _user_can_export(self):
+        """Permiso de exportar: administradores (staff/superuser) y roles con nivel revisor o administrador."""
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        if user.is_superuser or user.is_staff:
+            return True
+        if hasattr(user, 'tipo_usuario') and user.tipo_usuario:
+            return user.tipo_usuario.nivel_acceso in ['revisor', 'administrador']
+        return False
 
 @method_decorator(login_required, name='dispatch')
 class PostVentaCreateView(SuccessMessageMixin, CreateView):
@@ -261,6 +276,88 @@ class UserUpdateView(PermissionMixin, SuccessMessageMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return User.objects.get(pk=self.kwargs['pk'])
+
+@method_decorator(login_required, name='dispatch')
+class UserSelfProfileUpdateView(SuccessMessageMixin, UpdateView):
+    """Vista para que un usuario edite solo sus propios datos básicos.
+    No requiere permisos especiales y protege comité / tipo_usuario."""
+    model = User
+    form_class = UserSelfUpdateForm
+    template_name = 'postventa/profile_form.html'
+    success_url = reverse_lazy('postventa:list')
+    success_message = 'Perfil actualizado exitosamente.'
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        original_comite = self.request.user.comite
+        original_tipo = self.request.user.tipo_usuario
+        response = super().form_valid(form)
+        # Reforzar protección en caso de inyección maliciosa
+        if self.request.user.comite != original_comite or self.request.user.tipo_usuario != original_tipo:
+            self.request.user.comite = original_comite
+            self.request.user.tipo_usuario = original_tipo
+            self.request.user.save(update_fields=['comite', 'tipo_usuario'])
+        return response
+
+@login_required
+def export_postventas(request):
+    """Exporta las post-ventas a un archivo Excel (XLSX) para usuarios con permiso.
+    Permiten exportar: staff/superuser o nivel_acceso revisor/administrador."""
+    user = request.user
+    allowed = False
+    if user.is_superuser or user.is_staff:
+        allowed = True
+    elif hasattr(user, 'tipo_usuario') and user.tipo_usuario:
+        allowed = user.tipo_usuario.nivel_acceso in ['revisor', 'administrador']
+
+    if not allowed:
+        messages.error(request, 'No tienes permisos para exportar las post-ventas.')
+        return redirect('postventa:list')
+
+    # Obtener queryset según permisos de visualización
+    if user.is_superuser or user.is_staff or (hasattr(user, 'tipo_usuario') and user.tipo_usuario and user.tipo_usuario.puede_ver_todas_postventas):
+        qs = PostVenta.objects.all().select_related('usuario').prefetch_related('tipo_postventa')
+    else:
+        qs = PostVenta.objects.filter(usuario=user).select_related('usuario').prefetch_related('tipo_postventa')
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'PostVentas'
+
+    headers = [
+        'ID', 'Usuario', 'Nombre Remitente', 'Dirección', 'Teléfono', 'Tipos', 'Estado',
+        'Fecha Envío', 'Fecha Cierre', 'N° Seguimiento', 'Observaciones', 'Comentarios'
+    ]
+    ws.append(headers)
+
+    for pv in qs:
+        tipos = ', '.join([t.nombre for t in pv.tipo_postventa.all()])
+        ws.append([
+            pv.id,
+            pv.usuario.get_full_name() or pv.usuario.username,
+            pv.nombre_remitente,
+            pv.direccion_vivienda,
+            pv.numero_contacto,
+            tipos,
+            pv.get_estado_display(),
+            pv.fecha_envio_correo.strftime('%Y-%m-%d') if pv.fecha_envio_correo else '',
+            pv.fecha_cierre.strftime('%Y-%m-%d') if pv.fecha_cierre else '',
+            pv.numero_seguimiento or '',
+            pv.observaciones or '',
+            pv.comentarios or ''
+        ])
+
+    # Ajuste básico de ancho
+    for col_idx, header in enumerate(headers, start=1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = max(12, len(header) + 2)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = 'postventas_export.xlsx'
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    wb.save(response)
+    return response
 
 @login_required
 def user_change_password(request, pk):

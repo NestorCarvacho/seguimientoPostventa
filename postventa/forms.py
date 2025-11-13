@@ -71,6 +71,34 @@ class UserUpdateForm(forms.ModelForm):
         self.fields['tipo_usuario'].queryset = TipoUsuario.objects.filter(activo=True)
         self.fields['tipo_usuario'].empty_label = "Seleccione un tipo de usuario"
 
+class UserSelfUpdateForm(forms.ModelForm):
+    """Formulario reducido para que el propio usuario edite solo sus datos básicos.
+    Excluye campos administrativos y evita modificar comité o tipo_usuario."""
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'})
+        }
+        labels = {
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'email': 'Correo electrónico'
+        }
+
+    def save(self, commit=True):
+        """Forzar que comité y tipo_usuario permanezcan sin cambios aunque se intenten inyectar en POST."""
+        instance = super().save(commit=False)
+        # Seguridad: preservar comité y tipo_usuario originales
+        original = User.objects.get(pk=instance.pk)
+        instance.comite = original.comite
+        instance.tipo_usuario = original.tipo_usuario
+        if commit:
+            instance.save(update_fields=['first_name', 'last_name', 'email'])
+        return instance
+
 class UserCreateForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=150, required=True)
