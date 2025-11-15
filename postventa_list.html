@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitudes de Post-venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h5 class="mb-0 d-flex align-items-center gap-2">
+                        <i class="fas fa-clipboard-list"></i>
+                        Solicitudes de Post-venta
+                    </h5>
+                    <div class="d-flex gap-2">
+                        {% if user_permissions.puede_exportar %}
+                        <a href="{% url 'postventa:postventa_export' %}" class="btn btn-outline-primary" title="Exportar a Excel">
+                            <i class="fas fa-file-excel"></i> Exportar
+                        </a>
+                        {% endif %}
+                        {% if user_permissions.puede_crear %}
+                        <a href="{% url 'postventa:create' %}" class="btn btn-success" title="Crear nueva Post-venta">
+                            <i class="fas fa-plus"></i> Nueva
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="postventasTable" class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Nombre</th>
+                                    <th>Dirección</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Envío</th>
+                                    <th>N° Seguimiento</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for postventa in postventas %}
+                                <tr>
+                                    <td>{{ postventa.usuario.get_full_name|default:postventa.usuario.username }}</td>
+                                    <td>{{ postventa.nombre_remitente }}</td>
+                                    <td>{{ postventa.direccion_vivienda|truncatechars:30 }}</td>
+                                    <td>
+                                        {% for tipo in postventa.tipo_postventa.all %}
+                                            <span class="badge bg-info me-1">{{ tipo.nombre }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% if postventa.estado == 'abierto' %}
+                                            <span class="badge bg-warning text-dark">{{ postventa.get_estado_display }}</span>
+                                        {% elif postventa.estado == 'falta_material' %}
+                                            <span class="badge bg-primary">{{ postventa.get_estado_display }}</span>
+                                        {% elif postventa.estado == 'en_curso' %}
+                                            <span class="badge bg-primary">{{ postventa.get_estado_display }}</span>
+                                        {% elif postventa.estado == 'cerrado' %}
+                                            <span class="badge bg-success">{{ postventa.get_estado_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ postventa.fecha_envio_correo|date:"d/m/Y" }}</td>
+                                    <td>{{ postventa.numero_seguimiento|default:"-" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- Botón Ver (todos pueden ver) -->
+                                            <button type="button" class="btn btn-info btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalDetalle{{ postventa.id }}"
+                                                    title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            
+                                            <!-- Botón Editar (según permisos) -->
+                                            {% if user_permissions.puede_editar_todas or postventa.usuario == request.user %}
+                                                {% if user_permissions.puede_editar_todas or user_permissions.puede_editar_propias %}
+                                                    <a href="{% url 'postventa:update' postventa.id %}" 
+                                                       class="btn btn-warning btn-sm" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <!-- Botón Eliminar (según permisos) -->
+                                            {% if user_permissions.puede_eliminar_todas or postventa.usuario == request.user %}
+                                                {% if user_permissions.puede_eliminar_todas or user_permissions.puede_eliminar_propias %}
+                                                    <a href="{% url 'postventa:delete' postventa.id %}" 
+                                                       class="btn btn-danger btn-sm" title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        <!-- Asegurar que el contenido esté visible para DataTables -->
+                                        <span style="display:none;">{{ postventa.id }}</span>
+
+                                        <!-- Modal de detalles -->
+                                        <div class="modal fade" id="modalDetalle{{ postventa.id }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">
+                                                            <i class="fas fa-info-circle"></i>
+                                                            Detalles de Post-venta #{{ postventa.id }}
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <h6 class="text-muted">Información del Remitente</h6>
+                                                                <p><strong>Usuario:</strong> {{ postventa.usuario.get_full_name|default:postventa.usuario.username }}</p>
+                                                                <p><strong>Nombre:</strong> {{ postventa.nombre_remitente }}</p>
+                                                                <p><strong>Email:</strong> 
+                                                                    {% if postventa.usuario.email and postventa.usuario.email|length > 0 %}
+                                                                        <a href="mailto:{{ postventa.usuario.email }}">{{ postventa.usuario.email }}</a>
+                                                                    {% else %}
+                                                                        <span class="text-muted">Sin email registrado</span>
+                                                                    {% endif %}
+                                                                </p>
+                                                                <p><strong>Teléfono:</strong> {{ postventa.numero_contacto }}</p>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <h6 class="text-muted">Información del Envío</h6>
+                                                                <p><strong>Fecha Envío:</strong> {{ postventa.fecha_envio_correo|date:"d/m/Y" }}</p>
+                                                                {% if postventa.fecha_cierre %}
+                                                                    <p><strong>Fecha Cierre:</strong> {{ postventa.fecha_cierre|date:"d/m/Y" }}</p>
+                                                                {% endif %}
+                                                                
+                                                                <h6 class="text-muted">Tipos de Post-venta</h6>
+                                                                {% for tipo in postventa.tipo_postventa.all %}
+                                                                    <span class="badge bg-info me-1 mb-1">{{ tipo.nombre }}</span>
+                                                                {% endfor %}
+                                                                
+                                                                <h6 class="text-muted mt-3">Estado</h6>
+                                                                <p>{{ postventa.get_estado_display }}</p>
+                                                                
+                                                                {% if postventa.observaciones %}
+                                                                    <h6 class="text-muted mt-3">Observaciones</h6>
+                                                                    <p>{{ postventa.observaciones }}</p>
+                                                                {% endif %}
+                                                                
+                                                                {% if postventa.comentarios %}
+                                                                    <h6 class="text-muted mt-3">Comentarios</h6>
+                                                                    <p>{{ postventa.comentarios }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            <i class="fas fa-times"></i> Cerrar
+                                                        </button>
+                                                        <!-- Solo mostrar botones de acción si tiene permisos -->
+                                                        {% if user_permissions.puede_editar_todas or postventa.usuario == request.user %}
+                                                            {% if user_permissions.puede_editar_todas or user_permissions.puede_editar_propias %}
+                                                                <a href="{% url 'postventa:update' postventa.id %}" class="btn btn-warning">
+                                                                    <i class="fas fa-edit"></i> Editar
+                                                                </a>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <!-- Fila adaptada para DataTables: siempre 8 columnas sin colspan -->
+                                <tr class="table-empty">
+                                    <td class="text-center text-muted py-4">
+                                        <i class="fas fa-inbox fa-lg d-block mb-2"></i>
+                                        No hay post-ventas
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-center">
+                                        {% if user_permissions.puede_crear %}
+                                            <a href="{% url 'postventa:create' %}" class="btn btn-success btn-sm">
+                                                <i class="fas fa-plus"></i> Crear
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted small">Sin permisos</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
